@@ -1,6 +1,6 @@
 # nvhosts
 
-Generate nginx vhosts given a configuration file. Made to work with [mlcdf/cc-nginx-proxy](https://github.com/mlcdf/cc-nginx-proxy).
+Generate nginx vhosts given a configuration file. Made to work with [mlcdf/cc-reverse-proxy](https://github.com/mlcdf/cc-reverse-proxy).
 
 ## Usage
 
