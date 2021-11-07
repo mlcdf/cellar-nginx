@@ -30,12 +30,12 @@ server {
 
     server_name {{ site.domain }};
 
-    include /etc/nginx/conf.d/security.conf;
-    include /etc/nginx/conf.d/general.conf;
+    include /etc/nginx/security.conf;
+    include /etc/nginx/general.conf;
 
     location / {
         proxy_pass https://cellar-c2.services.clever-cloud.com/{{ site.domain }}/;
-        include /etc/nginx/conf.d/proxy.conf;
+        include /etc/nginx/proxy.conf;
     }
 
     {% for header in site.headers %}
