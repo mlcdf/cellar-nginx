@@ -45,6 +45,12 @@ server {
         {%- endfor %}
     }
     {% endfor %}
+
+    {% for redirect in site.redirects %}
+    location = {{ redirect.from }} {
+        return {{ redirect.status_code }} {{ redirect.to }}
+    }
+    {% endfor %}
 }
 "#;
 
@@ -55,10 +61,19 @@ pub struct Header {
     pub values: HashMap<String, String>,
 }
 
+#[derive(Default, Debug, Serialize, Deserialize)]
+pub struct Redirect {
+    #[serde(rename = "from")]
+    pub from_field: String,
+    pub to: String,
+    pub status_code: u16
+}
+
 #[derive(Serialize, Deserialize, Default)]
 struct Site {
     pub domain: String,
     pub headers: Vec<Header>,
+    pub redirects: Vec<Redirect>,
 }
 
 impl Site {
@@ -100,9 +115,16 @@ impl Config {
             values: values,
         };
 
+        let r = Redirect {
+            from_field: String::from("/example"),
+            to: String::from("http://example.com"),
+            status_code: 302
+        };
+
         let example_site = Site {
             domain: String::from("example.com"),
             headers: vec![h],
+            redirects: vec![r],
             ..Default::default()
         };
 
