@@ -10,8 +10,6 @@ version = "0.1.0"
 anyhow = "^1.0.44"
 argh = "^0.1.6"
 confy = "0.4"
-http = "^0.2.5"
 serde = {version = "1.0.130", features = ["derive"]}
 tera = {version = "1", default-features = false}
 toml = "0.5.8"
-serde_json = "1.0.59"
