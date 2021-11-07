@@ -9,7 +9,7 @@ pub static DEFAULT_PATH: &str = "./nvhosts.toml";
 /// Generate nginx vhosts from a configuration file
 #[derive(FromArgs)]
 struct Args {
-    /// path to config file to use; defaults to ho.toml
+    /// path to config file to use; defaults to nvhosts.toml
     #[argh(option, short = 'c', default = "DEFAULT_PATH.to_string()")]
     config: String,
 
@@ -49,4 +49,6 @@ fn main() {
         eprintln!("failed to run: {}", err);
         process::exit(1);
     });
+
+    eprintln!("All done!")
 }
