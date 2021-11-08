@@ -45,7 +45,7 @@ fn main() {
         process::exit(1);
     });
 
-    nvhosts::generate(&cfg).unwrap_or_else(|err| {
+    nvhosts::generate(cfg).unwrap_or_else(|err| {
         eprintln!("failed to run: {}", err);
         process::exit(1);
     });

@@ -1,15 +1,15 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use std::sync::{Arc, Mutex, MutexGuard};
+use std::thread;
 
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-use tera::{Context, Tera, try_get_value, to_value, Value};
+use tera::{to_value, try_get_value, Context, Tera, Value};
 
 pub const OUTPUT_DIR: &str = "./sites-available";
 
@@ -53,22 +53,22 @@ server {
 }
 "#;
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Header {
     #[serde(rename = "for")]
     pub for_field: String,
     pub values: HashMap<String, String>,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct Redirect {
     #[serde(rename = "from")]
     pub from_field: String,
     pub to: String,
-    pub status_code: u16
+    pub status_code: u16,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 struct Site {
     pub domain: String,
     pub headers: Vec<Header>,
@@ -76,11 +76,15 @@ struct Site {
 }
 
 impl Site {
-    pub fn generate(&self, tera: Rc<RefCell<Tera>>, writer: &mut impl std::io::Write) -> Result<(), Error> {
+    pub fn generate(
+        &self,
+        mut tera: MutexGuard<Tera>,
+        writer: &mut impl std::io::Write,
+    ) -> Result<(), Error> {
         let mut context = Context::new();
         context.insert("site", &self);
 
-        let content = tera.borrow_mut().render_str(TEMPLATE, &context)?;
+        let content = tera.render_str(TEMPLATE, &context)?;
         writer.write(content.as_bytes())?;
 
         Ok(())
@@ -117,7 +121,7 @@ impl Config {
         let r = Redirect {
             from_field: String::from("/example"),
             to: String::from("http://example.com"),
-            status_code: 302
+            status_code: 302,
         };
 
         let example_site = Site {
@@ -140,28 +144,46 @@ pub fn redirect_domain(value: &Value, _: &HashMap<String, Value>) -> tera::Resul
         s.replace("www.", "")
     } else {
         format!("www.{}", s)
-    };  
+    };
 
     Ok(to_value(&s).unwrap())
 }
 
+pub fn generate(config: Config) -> Result<(), Error> {
+    let tera = Arc::new(Mutex::new(Tera::default()));
 
-pub fn generate(config: &Config) -> Result<(), Error> {
-    let tera = Rc::new(RefCell::new(Tera::default()));
-    tera.borrow_mut().register_filter("redirect_domain", redirect_domain);
+    tera.lock()
+        .unwrap()
+        .register_filter("redirect_domain", redirect_domain);
 
     fs::create_dir_all(OUTPUT_DIR)?;
+    let mut handles = vec![];
 
-    for (_, site) in config.sites.iter().enumerate() {
-        let path = Path::new(OUTPUT_DIR).join(site.filename());
-        let display = path.display();
+    config
+        .sites
+        .iter()
+        .cloned()
+        .enumerate()
+        .for_each(|(_, site)| {
+            let tera = Arc::clone(&tera);
 
-        let mut file = match File::create(&path) {
-            Err(why) => panic!("couldn't create {}: {}", display, why),
-            Ok(file) => file,
-        };
+            let handle = thread::spawn(move || {
+                let path = Path::new(OUTPUT_DIR).join(site.filename());
+                let display = path.display();
 
-        site.generate(Rc::clone(&tera), file.by_ref())?;
+                let mut file = match File::create(&path) {
+                    // TODO: remove panic
+                    Err(why) => panic!("couldn't create {}: {}", display, why),
+                    Ok(file) => file,
+                };
+
+                site.generate(tera.lock().unwrap(), file.by_ref())
+            });
+            handles.push(handle);
+        });
+
+    for handle in handles {
+        handle.join().unwrap()?;
     }
 
     Ok(())
