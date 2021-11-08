@@ -84,7 +84,11 @@ impl Site {
         let mut context = Context::new();
         context.insert("site", &self);
 
-        let content = tera.render_str(TEMPLATE, &context)?;
+        let content = match tera.render_str(TEMPLATE, &context) {
+            Ok(x) =>x,
+            Err(x) => bail!("{:?}", x) 
+        };
+
         writer.write(content.as_bytes())?;
 
         Ok(())
