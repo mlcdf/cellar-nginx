@@ -15,9 +15,8 @@ pub const OUTPUT_DIR: &str = "./sites-available";
 
 pub const TEMPLATE: &str = r#"
 server {
-    listen      80;
-    listen      [::]:80;
-    server_name {{ site.domain | redirect_domain }};
+    listen      8080;
+    listen      [::]:8080;
 
     location / {
         return 301 https://{{ site.domain }}$request_uri;
@@ -25,8 +24,8 @@ server {
 }
 
 server {
-    listen 80;
-    listen [::]:80;
+    listen 8080;
+    listen [::]:8080;
 
     server_name {{ site.domain }};
 
