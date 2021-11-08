@@ -4,6 +4,7 @@ use argh::FromArgs;
 use confy;
 use toml;
 
+
 pub static DEFAULT_PATH: &str = "./nvhosts.toml";
 
 /// Generate nginx vhosts from a configuration file
@@ -16,6 +17,10 @@ struct Args {
     /// show an example config
     #[argh(switch)]
     example: bool,
+    
+    /// print verbose output
+    #[argh(switch, short = 'v')]
+    verbose: bool,
 
     /// show the version
     #[argh(switch, short = 'V')]
@@ -28,6 +33,10 @@ fn main() {
     if args.version {
         println!(std::env!("CARGO_PKG_VERSION"));
         process::exit(0);
+    }
+
+    if args.verbose {
+        nvhosts::verbose::enable();
     }
 
     if args.example {
@@ -49,6 +58,4 @@ fn main() {
         eprintln!("failed to run: {}", err);
         process::exit(1);
     });
-
-    eprintln!("All done!")
 }

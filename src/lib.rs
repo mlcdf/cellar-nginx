@@ -11,6 +11,8 @@ use serde::{Deserialize, Serialize};
 
 use tera::{to_value, try_get_value, Context, Tera, Value};
 
+pub mod verbose;
+
 pub const OUTPUT_DIR: &str = "./sites-available";
 
 pub const TEMPLATE: &str = r#"
@@ -183,7 +185,13 @@ pub fn generate(config: Config) -> Result<(), Error> {
                     Ok(file) => file,
                 };
 
-                site.generate(tera.lock().unwrap(), file.by_ref())
+                site.generate(tera.lock().unwrap(), file.by_ref())?;
+                
+                if verbose::is_enabled() {
+                    println!("{}", display)
+                }
+
+                Ok(())
             });
             handles.push(handle);
         });
