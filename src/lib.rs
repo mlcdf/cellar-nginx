@@ -48,7 +48,7 @@ server {
 
     {% for redirect in site.redirects %}
     location = {{ redirect.from }} {
-        return {{ redirect.status_code }} {{ redirect.to }}
+        return {{ redirect.status_code }} {{ redirect.to }};
     }
     {% endfor %}
 }
