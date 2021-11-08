@@ -37,7 +37,7 @@ server {
         include /etc/nginx/proxy.conf;
     }
 
-    {% for header in site.headers %}
+    {% for header in site.headers | default(value=[]) %}
     location {{ header.for }} {
         {%- for k, v in header.values %}
         add_header {{ k }} "{{ v }}" always;
@@ -45,7 +45,7 @@ server {
     }
     {% endfor %}
 
-    {% for redirect in site.redirects %}
+    {% for redirect in site.redirects | default(value=[]) %}
     location = {{ redirect.from }} {
         return {{ redirect.status_code }} {{ redirect.to }};
     }
@@ -71,8 +71,8 @@ pub struct Redirect {
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Site {
     pub domain: String,
-    pub headers: Vec<Header>,
-    pub redirects: Vec<Redirect>,
+    pub headers: Option<Vec<Header>>,
+    pub redirects: Option<Vec<Redirect>>,
 }
 
 impl Site {
@@ -130,8 +130,8 @@ impl Config {
 
         let example_site = Site {
             domain: String::from("example.com"),
-            headers: vec![h],
-            redirects: vec![r],
+            headers: Some(vec![h]),
+            redirects: Some(vec![r]),
             ..Default::default()
         };
 
