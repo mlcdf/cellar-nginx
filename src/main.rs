@@ -4,7 +4,6 @@ use argh::FromArgs;
 use confy;
 use toml;
 
-
 pub static DEFAULT_PATH: &str = "./nvhosts.toml";
 
 /// Generate nginx vhosts from a configuration file
@@ -17,7 +16,7 @@ struct Args {
     /// show an example config
     #[argh(switch)]
     example: bool,
-    
+
     /// print verbose output
     #[argh(switch, short = 'v')]
     verbose: bool,

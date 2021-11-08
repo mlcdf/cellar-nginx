@@ -186,7 +186,7 @@ pub fn generate(config: Config) -> Result<(), Error> {
                 };
 
                 site.generate(tera.lock().unwrap(), file.by_ref())?;
-                
+
                 if verbose::is_enabled() {
                     println!("{}", display)
                 }
