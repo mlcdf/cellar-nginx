@@ -26,7 +26,7 @@ fn main() {
     let args: Args = argh::from_env();
 
     if args.version {
-        eprintln!(std::env!("CARGO_PKG_VERSION"));
+        println!(std::env!("CARGO_PKG_VERSION"));
         process::exit(0);
     }
 
