@@ -6,7 +6,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
-use anyhow::{Error, Result};
+use anyhow::{Error, Result, bail};
 use serde::{Deserialize, Serialize};
 
 use tera::{to_value, try_get_value, Context, Tera, Value};
@@ -172,8 +172,7 @@ pub fn generate(config: Config) -> Result<(), Error> {
                 let display = path.display();
 
                 let mut file = match File::create(&path) {
-                    // TODO: remove panic
-                    Err(why) => panic!("couldn't create {}: {}", display, why),
+                    Err(why) =>  bail!("couldn't create {}: {}", display, why),
                     Ok(file) => file,
                 };
 
