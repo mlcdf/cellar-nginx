@@ -50,6 +50,8 @@ server {
         return {{ redirect.status_code }} {{ redirect.to }};
     }
     {% endfor %}
+
+    {{ site.extra }}
 }
 "#;
 
@@ -73,6 +75,7 @@ struct Site {
     pub domain: String,
     pub headers: Option<Vec<Header>>,
     pub redirects: Option<Vec<Redirect>>,
+    pub extra: Option<String>
 }
 
 impl Site {
