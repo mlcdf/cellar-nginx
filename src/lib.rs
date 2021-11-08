@@ -6,7 +6,7 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
-use anyhow::{Error, Result, bail};
+use anyhow::{bail, Error, Result};
 use serde::{Deserialize, Serialize};
 
 use tera::{to_value, try_get_value, Context, Tera, Value};
@@ -75,7 +75,7 @@ struct Site {
     pub domain: String,
     pub headers: Option<Vec<Header>>,
     pub redirects: Option<Vec<Redirect>>,
-    pub extra: Option<String>
+    pub extra: Option<String>,
 }
 
 impl Site {
@@ -88,8 +88,8 @@ impl Site {
         context.insert("site", &self);
 
         let content = match tera.render_str(TEMPLATE, &context) {
-            Ok(x) =>x,
-            Err(x) => bail!("{:?}", x) 
+            Ok(x) => x,
+            Err(x) => bail!("{:?}", x),
         };
 
         writer.write(content.as_bytes())?;
@@ -179,7 +179,7 @@ pub fn generate(config: Config) -> Result<(), Error> {
                 let display = path.display();
 
                 let mut file = match File::create(&path) {
-                    Err(why) =>  bail!("couldn't create {}: {}", display, why),
+                    Err(why) => bail!("couldn't create {}: {}", display, why),
                     Ok(file) => file,
                 };
 
