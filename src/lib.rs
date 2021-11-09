@@ -13,9 +13,8 @@ use tera::{to_value, try_get_value, Context, Tera, Value};
 
 pub mod verbose;
 
-pub const OUTPUT_DIR: &str = "./sites-available";
-
-pub const TEMPLATE: &str = r#"
+const OUTPUT_DIR: &str = "./sites-available";
+const TEMPLATE: &str = r#"
 server {
     listen      8080;
     listen      [::]:8080;
@@ -58,30 +57,30 @@ server {
 "#;
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
-pub struct Header {
+struct Header {
     #[serde(rename = "for")]
-    pub for_field: String,
-    pub values: HashMap<String, String>,
+    for_field: String,
+    values: HashMap<String, String>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
-pub struct Redirect {
+struct Redirect {
     #[serde(rename = "from")]
-    pub from_field: String,
-    pub to: String,
-    pub status_code: u16,
+    from_field: String,
+    to: String,
+    status_code: u16,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Site {
-    pub domain: String,
-    pub headers: Option<Vec<Header>>,
-    pub redirects: Option<Vec<Redirect>>,
-    pub extra: Option<String>,
+    domain: String,
+    headers: Option<Vec<Header>>,
+    redirects: Option<Vec<Redirect>>,
+    extra: Option<String>,
 }
 
 impl Site {
-    pub fn generate(
+    fn generate(
         &self,
         mut tera: MutexGuard<Tera>,
         writer: &mut impl std::io::Write,
@@ -99,7 +98,7 @@ impl Site {
         Ok(())
     }
 
-    pub fn filename(&self) -> String {
+    fn filename(&self) -> String {
         format!("{}.conf", &self.domain)
     }
 }
@@ -146,7 +145,7 @@ impl Config {
     }
 }
 
-pub fn redirect_domain(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
+fn redirect_domain(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
     let mut s = try_get_value!("redirect_domain", "value", String, value);
 
     s = if s.starts_with("www.") {
