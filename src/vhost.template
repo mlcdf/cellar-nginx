@@ -19,6 +19,7 @@ server {
 
     location / {
         proxy_pass https://cellar-c2.services.clever-cloud.com/{{ site.domain }}/;
+        proxy_ssl_server_name on;
         include /etc/nginx/proxy.conf;
     }
 
