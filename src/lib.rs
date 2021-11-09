@@ -14,47 +14,7 @@ use tera::{to_value, try_get_value, Context, Tera, Value};
 pub mod verbose;
 
 const OUTPUT_DIR: &str = "./sites-available";
-const TEMPLATE: &str = r#"
-server {
-    listen      8080;
-    listen      [::]:8080;
-
-    location / {
-        return 301 https://{{ site.domain }}$request_uri;
-    }
-}
-
-server {
-    listen 8080;
-    listen [::]:8080;
-
-    server_name {{ site.domain }};
-
-    include /etc/nginx/security.conf;
-    include /etc/nginx/general.conf;
-
-    location / {
-        proxy_pass https://cellar-c2.services.clever-cloud.com/{{ site.domain }}/;
-        include /etc/nginx/proxy.conf;
-    }
-
-    {% for header in site.headers | default(value=[]) %}
-    location {{ header.for }} {
-        {%- for k, v in header.values %}
-        add_header {{ k }} "{{ v }}" always;
-        {%- endfor %}
-    }
-    {% endfor %}
-
-    {% for redirect in site.redirects | default(value=[]) %}
-    location = {{ redirect.from }} {
-        return {{ redirect.status_code }} {{ redirect.to }};
-    }
-    {% endfor %}
-
-    {{ site.extra }}
-}
-"#;
+const TEMPLATE: &str = include_str!("vhost.template");
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 struct Header {
