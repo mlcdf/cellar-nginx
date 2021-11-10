@@ -13,3 +13,6 @@ confy = "0.4"
 serde = {version = "1.0.130", features = ["derive"]}
 tera = {version = "1", default-features = false}
 toml = "0.5.8"
+
+[dev-dependencies]
+ureq = "2.3.0"
