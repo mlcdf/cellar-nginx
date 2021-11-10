@@ -20,7 +20,7 @@ fn index_html() {
     // wait for nginx to start
     thread::sleep(time::Duration::from_secs(3));
 
-    let maybe_response = ureq::get("http://0.0.0.0:8080/index.html")
+    let maybe_response = ureq::get("http://0.0.0.0:8080/")
         .set("Host", "dev.www.mlcdf.fr")
         .call();
 
@@ -39,8 +39,15 @@ fn index_html() {
     assert_eq!(response.status(), 200);
 
     let body = response.into_string().expect("failed to get response body");
+
+    eprintln!("{:?}", body);
     if !body.contains("<!DOCTYPE html>") {
         eprintln!("{:?}", body);
-        panic!("response is not a HTML page : body does not contains <!DOCTYPE html>");
+        panic!("response is not a HTML page : body does not contains '<!DOCTYPE html>'");
+    }
+
+    if !body.contains("Maxime Le Conte des Floris") {
+        eprintln!("{:?}", body);
+        panic!("response is not a HTML page : body does not contains 'Maxime Le Conte des Floris");
     }
 }

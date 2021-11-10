@@ -19,7 +19,7 @@ server {
 
     location / {
         set $bucket "cellar-c2.services.clever-cloud.com";
-        proxy_pass https://$bucket/{{ site.domain }}/;
+        proxy_pass https://$bucket/;
         include /etc/nginx/proxy.conf;
     }
 
