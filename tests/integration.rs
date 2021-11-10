@@ -36,5 +36,11 @@ fn index_html() {
         }
     };
 
-    assert_eq!(response.status(), 200)
+    assert_eq!(response.status(), 200);
+
+    let body = response.into_string().expect("failed to get response body");
+    if !body.contains("<!DOCTYPE html>") {
+        eprintln!("{:?}", body);
+        panic!("response is not a HTML page : body does not contains <!DOCTYPE html>");
+    }
 }
