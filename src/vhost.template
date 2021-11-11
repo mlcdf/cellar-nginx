@@ -1,3 +1,15 @@
+
+server {
+    listen      8080;
+    listen      [::]:8080;
+
+    server_name .{{ site.domain | redirect_domain }};
+
+    location / {
+        return 301 https://{{ site.domain }}$request_uri;
+    }
+}
+
 server {
     listen 8080;
     listen [::]:8080;
