@@ -1,6 +1,6 @@
 FROM nginx:1.21.3
 
-RUN mkdir /etc/nginx/sites-enabled/
+RUN mkdir /etc/nginx/sites-enabled/ && > /etc/nginx/conf.d/default.conf
 
 COPY tests/fixtures/*.conf /etc/nginx/
 COPY target/debug/nvhosts tests/fixtures/nvhosts.toml ./
