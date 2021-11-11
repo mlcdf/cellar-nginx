@@ -24,8 +24,14 @@ fn serve_index_html() {
 
         let body = response.into_string().expect("failed to get response body");
 
-        assert!(body.contains("<!DOCTYPE html>"), "response is not a HTML page : body does not contains '<!DOCTYPE html>'");
-        assert!(body.contains("Maxime Le Conte des Floris"), "response is not a HTML page : body does not contains 'Maxime Le Conte des Floris'");
+        assert!(
+            body.contains("<!DOCTYPE html>"),
+            "response is not a HTML page : body does not contains '<!DOCTYPE html>'"
+        );
+        assert!(
+            body.contains("Maxime Le Conte des Floris"),
+            "response is not a HTML page : body does not contains 'Maxime Le Conte des Floris'"
+        );
     });
 }
 
