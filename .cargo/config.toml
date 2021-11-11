@@ -1,3 +1,2 @@
-
-[alias]     # command aliases
-runx = ["run","--","-c","tests/fixtures/nvhosts.toml"]
+[alias] # command aliases
+runx = ["run", "--", "-c", "tests/fixtures/nvhosts.toml"]
