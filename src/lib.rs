@@ -166,3 +166,21 @@ pub fn generate(config: Config) -> Result<(), Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_redirect_domain() {
+        use serde_json::json;
+
+        let value = redirect_domain(&json!("www.mlcdf.fr"), &HashMap::<String, Value>::new());
+        assert_eq!(value.unwrap().to_string(), "\"mlcdf.fr\"");
+
+        let value = redirect_domain(&json!("mlcdf.fr"), &HashMap::<String, Value>::new());
+        assert_eq!(value.unwrap().to_string(), "\"www.mlcdf.fr\"");
+
+        let value = redirect_domain(&json!("dev.www.mlcdf.fr"), &HashMap::<String, Value>::new());
+        assert_eq!(value.unwrap().to_string(), "\"www.dev.www.mlcdf.fr\"");
+    }
+}
