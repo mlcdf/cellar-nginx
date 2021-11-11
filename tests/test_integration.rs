@@ -47,5 +47,8 @@ fn serve_css() {
             response.header("Cache-Control").unwrap(),
             "public, max-age=31536000, immutable"
         );
+
+        let body = response.into_string().expect("Failed to get body");
+        assert!(body.contains("Helvetica"));
     })
 }
