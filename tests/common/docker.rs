@@ -1,5 +1,8 @@
 use std::process::{Command, Output};
 
+
+pub const IMAGE_TAG: &str = "nvhosts-test";
+
 pub struct RunOutput {
     pub output: Output,
     pub container_id: String,

@@ -16,4 +16,3 @@ toml = "0.5.8"
 
 [dev-dependencies]
 ureq = "2.3.0"
-ctor = "0.1.21"
