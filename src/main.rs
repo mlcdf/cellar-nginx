@@ -4,7 +4,7 @@ use argh::FromArgs;
 use confy;
 use toml;
 
-pub static DEFAULT_PATH: &str = "./nvhosts.toml";
+pub const DEFAULT_PATH: &str = "./nvhosts.toml";
 
 /// Generate nginx vhosts from a configuration file
 #[derive(FromArgs)]
