@@ -28,7 +28,12 @@ struct Redirect {
     #[serde(rename = "from")]
     from_field: String,
     to: String,
+    #[serde(default = "default_redirect_status_code")]
     status_code: u16,
+}
+
+fn default_redirect_status_code() -> u16 {
+    302
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -89,7 +94,7 @@ impl Config {
         let r = Redirect {
             from_field: String::from("/example"),
             to: String::from("http://example.com"),
-            status_code: 302,
+            status_code: 301,
         };
 
         let example_site = Site {
