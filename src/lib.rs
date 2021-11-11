@@ -8,7 +8,6 @@ use std::thread;
 
 use anyhow::{bail, Error, Result};
 use serde::{Deserialize, Serialize};
-
 use tera::{to_value, try_get_value, Context, Tera, Value};
 
 pub mod verbose;
@@ -32,7 +31,7 @@ struct Redirect {
     status_code: u16,
 }
 
-fn default_redirect_status_code() -> u16 {
+const fn default_redirect_status_code() -> u16 {
     302
 }
 
@@ -170,6 +169,7 @@ pub fn generate(config: Config) -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_redirect_domain() {
         use serde_json::json;
