@@ -20,13 +20,12 @@ fn index_html() {
     // wait for nginx to start
     thread::sleep(time::Duration::from_secs(3));
 
-    let maybe_response = ureq::get("http://0.0.0.0:8080/")
+    let maybe_response_index = ureq::get("http://0.0.0.0:8080/")
         .set("Host", "dev.www.mlcdf.fr")
         .call();
 
-    let response = match maybe_response {
+    let response = match maybe_response_index {
         Ok(response) => {
-            docker::clean(&output.container_id);
             response
         }
         Err(err) => {
@@ -50,4 +49,24 @@ fn index_html() {
         eprintln!("{:?}", body);
         panic!("response is not a HTML page : body does not contains 'Maxime Le Conte des Floris");
     }
+
+    let maybe_response_css = ureq::get("http://0.0.0.0:8080/theme/css/poole.css")
+        .set("Host", "dev.www.mlcdf.fr")
+        .call();
+
+    let response = match maybe_response_css {
+        Ok(response) => {
+            docker::clean(&output.container_id);
+            response
+        }
+        Err(err) => {
+            docker::logs(&output.container_id);
+            docker::clean(&output.container_id);
+            panic!("{}", err)
+        }
+    };
+
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.header("Content-Type").unwrap(), "text/css; charset=utf-8");
+    assert_eq!(response.header("Cache-Control").unwrap(), "public, max-age=31536000, immutable");
 }
