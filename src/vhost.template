@@ -22,7 +22,7 @@ server {
     {% endfor %}
 
     {% for redirect in site.redirects | default(value=[]) %}
-    location = {{ redirect.from }} {
+    location {{ redirect.from }} {
         return {{ redirect.status_code }} {{ redirect.to }};
     }
     {% endfor %}
