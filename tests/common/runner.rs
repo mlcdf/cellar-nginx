@@ -1,13 +1,25 @@
 use core::time;
+use std::any::Any;
 use std::env;
 use std::net::TcpStream;
+use std::ops::Deref;
 use std::panic;
-use std::sync::Once;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, Once};
 use std::thread;
+
+use lazy_static::lazy_static;
 
 use super::docker;
 
 static START: Once = Once::new();
+static STOP: Once = Once::new();
+static NB_TESTS: AtomicUsize = AtomicUsize::new(0);
+
+lazy_static! {
+    static ref RESULTS: Arc<Mutex<Vec<Result<(), Box<dyn Any + Send>>>>> =
+        Arc::new(Mutex::new(Vec::<Result<(), Box<dyn Any + Send>>>::new()));
+}
 
 fn setup() {
     docker::build(docker::IMAGE_TAG);
@@ -16,6 +28,7 @@ fn setup() {
     let mut counter: u16 = 0;
 
     loop {
+        // faire un read sur docker logs
         match TcpStream::connect("0.0.0.0:8080") {
             Ok(_) => break,
             Err(err) => {
@@ -47,6 +60,7 @@ fn teardown(is_success: bool) {
     if is_success {
         docker::logs(&container_id);
     }
+
     docker::clean(&container_id);
 }
 
@@ -58,9 +72,24 @@ where
         setup();
     });
 
+    NB_TESTS.fetch_add(1, Ordering::SeqCst);
     let result = panic::catch_unwind(test);
+    let is_success = result.is_ok();
+    RESULTS.lock().unwrap().push(result);
 
-    teardown(result.is_ok());
+    if NB_TESTS.load(Ordering::SeqCst) == RESULTS.lock().unwrap().len() {
+        let ok_tests = RESULTS.lock().unwrap();
 
-    assert!(result.is_ok())
+        let ok_tests: Vec<&Result<(), Box<dyn Any + Send>>> = ok_tests
+            .deref()
+            .into_iter()
+            .filter(|result| result.is_err())
+            .collect();
+
+        STOP.call_once(|| {
+            teardown(ok_tests.len() > 0);
+        });
+    }
+
+    assert!(is_success);
 }
