@@ -39,7 +39,7 @@ fn main() {
     }
 
     if args.example {
-        let config = nvhosts::Config::example();
+        let config = nvhosts::UnverifiedConfig::example();
         let example: String = toml::to_string_pretty(&config).unwrap_or_else(|err| {
             eprintln!("failed to print an example file {}: {}", args.config, err);
             process::exit(1);
@@ -48,12 +48,12 @@ fn main() {
         process::exit(0);
     }
 
-    let cfg: nvhosts::Config = confy::load_path(&args.config).unwrap_or_else(|err| {
+    let cfg: nvhosts::UnverifiedConfig = confy::load_path(&args.config).unwrap_or_else(|err| {
         eprintln!("failed to load file {}: {}", args.config, err);
         process::exit(1);
     });
 
-    nvhosts::generate(cfg).unwrap_or_else(|err| {
+    nvhosts::run(cfg).unwrap_or_else(|err| {
         eprintln!("failed to run: {}", err);
         process::exit(1);
     });

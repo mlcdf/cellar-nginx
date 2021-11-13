@@ -6,7 +6,8 @@ use std::path::Path;
 use std::sync::{Arc, Mutex, MutexGuard};
 use std::thread;
 
-use anyhow::{bail, Error, Result};
+use anyhow::{anyhow, bail, Error, Result};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tera::{to_value, try_get_value, Context, Tera, Value};
 
@@ -20,6 +21,12 @@ struct Header {
     #[serde(rename = "for")]
     for_field: String,
     values: HashMap<String, String>,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+struct CacheControl {
+    mime: String,
+    value: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
@@ -38,6 +45,7 @@ const fn default_redirect_status_code() -> u16 {
 #[derive(Serialize, Deserialize, Default, Clone)]
 struct Site {
     domain: String,
+    cache_control: Option<Vec<CacheControl>>,
     headers: Option<Vec<Header>>,
     redirects: Option<Vec<Redirect>>,
     extra: Option<String>,
@@ -68,11 +76,11 @@ impl Site {
 }
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct Config {
+pub struct UnverifiedConfig {
     sites: Vec<Site>,
 }
 
-impl Config {
+impl UnverifiedConfig {
     pub fn example() -> Self {
         let mut values = HashMap::new();
         values.insert(String::from("Cache-Control"), String::from("public"));
@@ -107,6 +115,39 @@ impl Config {
             sites: vec![example_site],
         }
     }
+
+    fn validate(self) -> Result<Config, Error> {
+        let mut errors = Vec::<Error>::new();
+
+        let re = Regex::new(r"\b([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}\b")?;
+
+        for site in self.sites.iter() {
+            if !re.is_match(&site.domain) {
+                errors.push(anyhow!("{:?} ", site.domain));
+            }
+
+            if site.headers.is_some() {
+                let cache_control_headers: Vec<Header> = site
+                    .headers
+                    .clone()
+                    .unwrap()
+                    .iter()
+                    .cloned()
+                    .filter(|header| header.values.contains_key("Cache-Control"))
+                    .collect();
+
+                cache_control_headers.iter().for_each(|header| {
+                    errors.push(anyhow!("{:?} ", header));
+                });
+            }
+        }
+
+        if errors.len() > 0 {
+            return Err(anyhow!("{:?} ", errors));
+        }
+
+        Ok(Config { sites: self.sites })
+    }
 }
 
 fn redirect_domain(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Value> {
@@ -121,49 +162,70 @@ fn redirect_domain(value: &Value, _: &HashMap<String, Value>) -> tera::Result<Va
     Ok(to_value(&s).unwrap())
 }
 
-pub fn generate(config: Config) -> Result<(), Error> {
-    let tera = Arc::new(Mutex::new(Tera::default()));
+fn pad_right(value: &Value, args: &HashMap<String, Value>) -> tera::Result<Value> {
+    let s = try_get_value!("pad_right", "value", String, value);
 
-    tera.lock()
-        .unwrap()
-        .register_filter("redirect_domain", redirect_domain);
+    let width = match args.get("width") {
+        Some(val) => try_get_value!("pad_right", "plural", usize, val),
+        None => 35,
+    };
 
-    fs::create_dir_all(OUTPUT_DIR)?;
-    let mut handles = vec![];
+    Ok(to_value(format!("{:width$}", s, width = width)).unwrap())
+}
 
-    config
-        .sites
-        .iter()
-        .cloned()
-        .enumerate()
-        .for_each(|(_, site)| {
-            let tera = Arc::clone(&tera);
+#[derive(Serialize, Deserialize, Default)]
+pub struct Config {
+    sites: Vec<Site>,
+}
 
-            let handle = thread::spawn(move || {
-                let path = Path::new(OUTPUT_DIR).join(site.filename());
-                let display = path.display();
+impl Config {
+    fn generate(self) -> Result<()> {
+        fs::create_dir_all(OUTPUT_DIR)?;
 
-                let mut file = match File::create(&path) {
-                    Err(why) => bail!("couldn't create {}: {}", display, why),
-                    Ok(file) => file,
-                };
+        let mut tera = Tera::default();
+        tera.register_filter("redirect_domain", redirect_domain);
+        tera.register_filter("pad_right", pad_right);
 
-                site.generate(tera.lock().unwrap(), file.by_ref())?;
+        let tera = Arc::new(Mutex::new(tera));
+        let mut handles = vec![];
 
-                if verbose::is_enabled() {
-                    println!("{}", display)
-                }
+        self.sites
+            .iter()
+            .cloned()
+            .enumerate()
+            .for_each(|(_, site)| {
+                let tera = Arc::clone(&tera);
 
-                Ok(())
+                let handle = thread::spawn(move || {
+                    let path = Path::new(OUTPUT_DIR).join(site.filename());
+                    let display = path.display();
+
+                    let mut file = match File::create(&path) {
+                        Err(why) => bail!("couldn't create {}: {}", display, why),
+                        Ok(file) => file,
+                    };
+
+                    site.generate(tera.lock().unwrap(), file.by_ref())?;
+
+                    if verbose::is_enabled() {
+                        println!("{}", display)
+                    }
+
+                    Ok(())
+                });
+                handles.push(handle);
             });
-            handles.push(handle);
-        });
 
-    for handle in handles {
-        handle.join().unwrap()?;
+        for handle in handles {
+            handle.join().unwrap()?;
+        }
+
+        Ok(())
     }
+}
 
-    Ok(())
+pub fn run(config: UnverifiedConfig) -> Result<()> {
+    config.validate()?.generate()
 }
 
 #[cfg(test)]

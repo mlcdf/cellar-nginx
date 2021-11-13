@@ -10,25 +10,37 @@ server {
     }
 }
 
+map $sent_http_content_type $cacheable_types_{{ site.domain | replace(from=".", to="_") }} {
+    {% for value in site.cache_control -%}
+    "{{ value.mime ~ '; charset=utf-8"' | pad_right }} "{{ value.value }}";
+    "{{ value.mime ~ '"' | pad_right }} "{{ value.value }}";
+    {% endfor -%}
+    {{ "default" | pad_right }}  "public";
+}
+
 server {
     listen 8080;
     listen [::]:8080;
 
     server_name {{ site.domain }};
 
-    include /etc/nginx/security.conf;
     include /etc/nginx/general.conf;
 
     location / {
-        {% for header in site.headers | default(value=[]) %}
+
+        {% for header in site.headers | default(value=[]) -%}
         location {{ header.for }} {
             set $bucket "cellar-c2.services.clever-cloud.com";
             proxy_pass https://$bucket;
             include /etc/nginx/proxy.conf;
 
+            add_header Cache-Control $cacheable_types_{{ site.domain | replace(from=".", to="_") }};
+            
             {%- for k, v in header.values %}
             add_header {{ k }} "{{ v }}";
             {%- endfor %}
+
+            include /etc/nginx/security_headers.conf;
         }
         {% endfor %}
 
@@ -37,10 +49,15 @@ server {
             return {{ redirect.status_code }} {{ redirect.to }};
         }
         {% endfor %}
+
         set $bucket "cellar-c2.services.clever-cloud.com";
         proxy_pass https://$bucket;
         include /etc/nginx/proxy.conf;
 
+        add_header Cache-Control $cacheable_types_{{ site.domain | replace(from=".", to="_") }};
+
+        include /etc/nginx/security_headers.conf;
+        
         {{- site.extra }}
     }
 }

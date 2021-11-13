@@ -8,6 +8,7 @@ version = "0.1.0"
 anyhow = "^1.0.44"
 argh = "^0.1.6"
 confy = "0.4"
+regex = "1.5.4"
 serde = {version = "1.0.130", features = ["derive"]}
 tera = {version = "1", default-features = false}
 toml = "0.5.8"

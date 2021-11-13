@@ -1,5 +1,3 @@
-use std::panic;
-
 use ureq;
 
 mod common;
@@ -21,6 +19,15 @@ fn serve_index_html() {
         let response = maybe_response.unwrap();
 
         assert_eq!(response.status(), 200);
+        assert_eq!(
+            response.header("Content-Security-Policy").unwrap(),
+            "default-src 'yolo'"
+        );
+
+        assert_eq!(
+            response.header("X-XSS-Protection").unwrap(),
+            "1; mode=block"
+        );
 
         let body = response.into_string().expect("failed to get response body");
 
